@@ -5,6 +5,7 @@ from utils.constants import (
     DRIVER_POSITIONS,
     CONSTRUCTOR_POSITIONS,
     PLACEHOLDER,
+    TEAM_COLORS,
 )
 from utils.data_helpers import (
     load_drivers,
