@@ -112,6 +112,55 @@ def get_selected_constructors(exclude_pos: str) -> set[str]:
             selected.add(val)
     return selected
 
+
+def calculate_constructor_standings_from_drivers() -> list[str]:
+    """
+    Calculate constructor championship order based on current driver selections.
+    Returns ordered list of constructor names based on best combined driver positions.
+    """
+    # Collect all driver positions
+    team_positions = {}
+    for i, pos in enumerate(DRIVER_POSITIONS):
+        driver = st.session_state.get(f"season_driver_{pos}", PLACEHOLDER)
+        if driver != PLACEHOLDER and driver in driver_teams:
+            team = driver_teams[driver]
+            position_value = i + 1  # P1=1, P2=2, etc.
+            if team not in team_positions:
+                team_positions[team] = []
+            team_positions[team].append(position_value)
+    
+    # Calculate team scores (sum of best 2 drivers, or just 1 if only 1 driver)
+    team_scores = {}
+    for team, positions in team_positions.items():
+        # Sort to get best positions first
+        positions.sort()
+        # Take top 2 positions (or just 1 if team only has 1 driver selected)
+        score = sum(positions[:2])
+        team_scores[team] = score
+    
+    # Sort teams by score (lower is better)
+    sorted_teams = sorted(team_scores.items(), key=lambda x: x[1])
+    
+    # Return just the team names in order
+    return [team for team, score in sorted_teams]
+
+
+def auto_populate_constructors():
+    """Auto-populate constructor dropdowns based on driver standings."""
+    constructor_order = calculate_constructor_standings_from_drivers()
+    
+    # Only auto-populate if we have enough teams and constructors aren't already filled
+    if len(constructor_order) >= len(CONSTRUCTOR_POSITIONS):
+        # Check if constructors are already mostly filled
+        filled_count = sum(1 for pos in CONSTRUCTOR_POSITIONS 
+                          if st.session_state.get(f"season_constructor_{pos}", PLACEHOLDER) != PLACEHOLDER)
+        
+        # Only auto-fill if less than half are filled
+        if filled_count < len(CONSTRUCTOR_POSITIONS) / 2:
+            for i, pos in enumerate(CONSTRUCTOR_POSITIONS):
+                if i < len(constructor_order):
+                    st.session_state[f"season_constructor_{pos}"] = constructor_order[i]
+
 # ---------------------------------------------------------------------------
 # Championships Side-by-Side
 # ---------------------------------------------------------------------------
@@ -201,6 +250,15 @@ with col_drivers:
 # ---------------------------------------------------------------------------
 with col_constructors:
     st.markdown('<div class="championship-section"><h3>Constructors\' Championship</h3><div class="championship-body">', unsafe_allow_html=True)
+
+    # Auto-populate button
+    col_auto, _ = st.columns([1, 1])
+    with col_auto:
+        if st.button("Auto-calculate from Drivers' Championship", use_container_width=True, key="auto_constructors"):
+            auto_populate_constructors()
+            st.rerun()
+    
+    st.markdown("")
 
     constructor_selections: dict[str, str] = {}
     for i, pos in enumerate(CONSTRUCTOR_POSITIONS):
