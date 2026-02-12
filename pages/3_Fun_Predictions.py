@@ -1,62 +1,124 @@
 import streamlit as st
 import pandas as pd
-import os
 from datetime import date
+from utils.constants import USERS
+from utils.data_helpers import load_fun_predictions, save_fun_predictions
+from utils.styles import COMMON_STYLES
+from utils.ui_helpers import render_page_header
 
 st.set_page_config(page_title="Fun Predictions", page_icon="", layout="wide")
 
 # ---------------------------------------------------------------------------
 # CSS
 # ---------------------------------------------------------------------------
+st.markdown(COMMON_STYLES, unsafe_allow_html=True)
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
     .page-header {
-        background: linear-gradient(135deg, #e10600 0%, #1e1e1e 60%);
-        border-radius: 14px;
-        padding: 2rem 2.5rem;
-        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #e10600 0%, #8b0000 50%, #1e1e1e 100%);
+        border-radius: 18px;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2rem;
         color: white;
+        box-shadow: 0 12px 40px rgba(225, 6, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
+        position: relative;
+        overflow: hidden;
     }
-    .page-header h1 { font-size: 2.2rem; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
-    .page-header p  { opacity: 0.8; margin: 0.25rem 0 0 0; }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 20px,
+            rgba(255,255,255,0.02) 20px,
+            rgba(255,255,255,0.02) 40px
+        );
+        pointer-events: none;
+    }
+    .page-header h1 { 
+        font-size: 2.5rem; 
+        font-weight: 900; 
+        margin: 0; 
+        letter-spacing: -1px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        position: relative;
+    }
+    .page-header p { 
+        opacity: 0.85; 
+        margin: 0.4rem 0 0 0;
+        font-size: 1.05rem;
+        font-weight: 500;
+        position: relative;
+    }
 
     .fun-card {
-        background: #2a2a2a;
-        border: 1px solid #444;
+        background: linear-gradient(135deg, #1a1a1a 0%, #151515 100%);
+        border: 1px solid #2a2a2a;
         border-top: 4px solid #e10600;
-        border-radius: 4px;
-        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        padding: 1.5rem 1.75rem;
         color: white;
-        min-height: 160px;
+        min-height: 180px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        box-shadow: 2px 3px 8px rgba(0,0,0,0.3);
+        box-shadow: 0 6px 25px rgba(0,0,0,0.5), 0 0 0 1px rgba(225,6,0,0.1) inset;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .fun-card::before {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 300%;
+        height: 300%;
+        background: radial-gradient(circle, rgba(225,6,0,0.05) 0%, transparent 70%);
+        transition: all 0.5s;
+        pointer-events: none;
+    }
+    .fun-card:hover {
+        transform: translateY(-4px) rotate(0.5deg);
+        box-shadow: 0 12px 35px rgba(225, 6, 0, 0.25), 0 0 0 1px rgba(225,6,0,0.2) inset;
+        border-color: rgba(225, 6, 0, 0.3);
+    }
+    .fun-card:hover::before {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
     .fun-card .fun-text {
-        font-size: 1rem;
+        font-size: 1.05rem;
         font-weight: 600;
-        line-height: 1.5;
-        margin-bottom: 0.75rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
         flex: 1;
+        position: relative;
     }
     .fun-card .fun-meta {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.75rem;
-        opacity: 0.5;
+        font-size: 0.7rem;
+        opacity: 0.45;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        font-weight: 600;
+        position: relative;
     }
     .fun-card .fun-user {
         color: #e10600;
-        font-weight: 700;
+        font-weight: 800;
         opacity: 1;
+        text-shadow: 0 1px 4px rgba(225, 6, 0, 0.4);
     }
 
     /* Red trash-can delete button — pulled into card bottom-right */
@@ -88,20 +150,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-USERS = ["Seth", "Colin"]
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-FUN_PATH = os.path.join(DATA_DIR, "fun_predictions.csv")
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def load_fun_predictions() -> pd.DataFrame:
-    return pd.read_csv(FUN_PATH)
-
-
-def save_fun_predictions(df: pd.DataFrame):
-    df.to_csv(FUN_PATH, index=False)
+# Data will be loaded using utility functions
 
 
 # ---------------------------------------------------------------------------

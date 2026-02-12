@@ -1,72 +1,118 @@
 import streamlit as st
 import pandas as pd
-import os
+from utils.constants import USERS, PLACEHOLDER
+from utils.data_helpers import load_drivers, load_races, load_race_predictions, save_race_predictions
+from utils.styles import COMMON_STYLES, PREDICTION_CARD_STYLES
+from utils.ui_helpers import pos_class, render_page_header
 
 st.set_page_config(page_title="Race Predictions", page_icon="", layout="wide")
 
 # ---------------------------------------------------------------------------
 # CSS
 # ---------------------------------------------------------------------------
+st.markdown(COMMON_STYLES, unsafe_allow_html=True)
+st.markdown(PREDICTION_CARD_STYLES, unsafe_allow_html=True)
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
     .page-header {
-        background: linear-gradient(135deg, #e10600 0%, #1e1e1e 60%);
-        border-radius: 14px;
-        padding: 2rem 2.5rem;
-        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #e10600 0%, #8b0000 50%, #1e1e1e 100%);
+        border-radius: 18px;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2rem;
         color: white;
+        box-shadow: 0 12px 40px rgba(225, 6, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
+        position: relative;
+        overflow: hidden;
     }
-    .page-header h1 { font-size: 2.2rem; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
-    .page-header p  { opacity: 0.8; margin: 0.25rem 0 0 0; }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
+        transform: skewY(-2deg);
+    }
+    .page-header h1 { 
+        font-size: 2.5rem; 
+        font-weight: 900; 
+        margin: 0; 
+        letter-spacing: -1px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        position: relative;
+    }
+    .page-header p { 
+        opacity: 0.85; 
+        margin: 0.4rem 0 0 0;
+        font-size: 1.05rem;
+        font-weight: 500;
+        position: relative;
+    }
 
     .pos-label {
         display: inline-block;
-        width: 38px;
+        width: 40px;
         text-align: center;
         font-weight: 800;
-        font-size: 0.82rem;
-        border-radius: 6px;
-        padding: 2px 0;
-        margin-right: 4px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        padding: 3px 0;
+        margin-right: 6px;
         color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        transition: transform 0.2s;
     }
-    .pos-gold   { background: #FFD700; color: #1e1e1e; }
-    .pos-silver { background: #C0C0C0; color: #1e1e1e; }
-    .pos-bronze { background: #CD7F32; color: white; }
-    .pos-points { background: #2d6a4f; }
-    .pos-rest   { background: #444; }
+    .pos-label:hover { transform: scale(1.05); }
+    .pos-gold   { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1e1e1e; box-shadow: 0 2px 12px rgba(255,215,0,0.5); }
+    .pos-silver { background: linear-gradient(135deg, #E8E8E8 0%, #C0C0C0 100%); color: #1e1e1e; box-shadow: 0 2px 12px rgba(192,192,192,0.5); }
+    .pos-bronze { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); color: white; box-shadow: 0 2px 12px rgba(205,127,50,0.4); }
+    .pos-points { background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%); box-shadow: 0 2px 10px rgba(45,106,79,0.4); }
+    .pos-rest   { background: linear-gradient(135deg, #444 0%, #2a2a2a 100%); }
 
     .user-col-header {
-        font-weight: 700;
-        font-size: 1.05rem;
-        padding: 0.75rem 0 0.25rem 0;
-        border-bottom: 2px solid #e10600;
-        margin-bottom: 0.5rem;
+        font-weight: 800;
+        font-size: 1.1rem;
+        padding: 1rem 0 0.5rem 0;
+        border-bottom: 3px solid #e10600;
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.3px;
+        background: linear-gradient(90deg, rgba(225,6,0,0.1) 0%, transparent 100%);
+        padding-left: 0.5rem;
+        border-radius: 4px 4px 0 0;
     }
     .result-row {
         display: flex;
         align-items: center;
-        padding: 4px 8px;
-        border-radius: 6px;
-        margin-bottom: 2px;
-        font-size: 0.92rem;
+        padding: 6px 10px;
+        border-radius: 8px;
+        margin-bottom: 3px;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+        border: 1px solid transparent;
     }
-    .result-row:nth-child(odd) { background: rgba(255,255,255,0.03); }
+    .result-row:nth-child(odd) { background: rgba(255,255,255,0.02); }
+    .result-row:hover { 
+        background: rgba(225,6,0,0.08); 
+        border-color: rgba(225,6,0,0.2);
+    }
     .result-pos {
-        width: 36px;
+        width: 40px;
         font-weight: 800;
         flex-shrink: 0;
         margin-right: 1rem;
     }
-    .result-driver { flex: 1; }
+    .result-driver { 
+        flex: 1;
+        font-weight: 600;
+    }
     .result-team {
-        font-size: 0.78rem;
-        opacity: 0.55;
-        padding-left: 8px;
+        font-size: 0.75rem;
+        opacity: 0.6;
+        padding-left: 10px;
+        font-weight: 600;
     }
     .team-dot {
         display: inline-block;
@@ -106,50 +152,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-USERS = ["Seth", "Colin"]
+# Data will be loaded using utility functions
 NUM_POSITIONS = 22
 POSITIONS = [f"P{i}" for i in range(1, NUM_POSITIONS + 1)]
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-
-TEAM_COLORS = {
-    "McLaren": "#FF8700", "Mercedes": "#00D2BE", "Red Bull": "#1E41FF",
-    "Ferrari": "#DC0000", "Williams": "#005AFF", "Racing Bulls": "#2B4562",
-    "Aston Martin": "#006F62", "Haas": "#B6BABD", "Audi": "#C0C0C0",
-    "Alpine": "#0090FF", "Cadillac": "#FFD700",
-}
-
-PLACEHOLDER = "-- Select a driver --"
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def load_drivers():
-    return pd.read_csv(os.path.join(DATA_DIR, "drivers.csv"))
-
-
-def load_races():
-    return pd.read_csv(os.path.join(DATA_DIR, "races.csv"))
-
-
-def load_race_predictions():
-    return pd.read_csv(os.path.join(DATA_DIR, "race_predictions.csv"))
-
-
-def save_race_predictions(df: pd.DataFrame):
-    df.to_csv(os.path.join(DATA_DIR, "race_predictions.csv"), index=False)
-
-
-def pos_class(i: int) -> str:
-    if i == 1:
-        return "pos-gold"
-    if i == 2:
-        return "pos-silver"
-    if i == 3:
-        return "pos-bronze"
-    if i <= 10:
-        return "pos-points"
-    return "pos-rest"
 
 
 def driver_with_team(name: str, drivers_df: pd.DataFrame) -> str:

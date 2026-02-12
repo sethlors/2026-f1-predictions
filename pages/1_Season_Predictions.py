@@ -1,153 +1,28 @@
 import streamlit as st
 import pandas as pd
-import os
+from utils.constants import (
+    USERS,
+    DRIVER_POSITIONS,
+    CONSTRUCTOR_POSITIONS,
+    PLACEHOLDER,
+)
+from utils.data_helpers import (
+    load_drivers,
+    load_constructors,
+    load_season_predictions,
+    save_season_predictions,
+)
+from utils.styles import COMMON_STYLES, SEASON_PREDICTIONS_STYLES, PREDICTION_CARD_STYLES
+from utils.ui_helpers import driver_with_team, pos_class, render_page_header
 
 st.set_page_config(page_title="Season Predictions", page_icon="", layout="wide")
 
 # ---------------------------------------------------------------------------
 # CSS
 # ---------------------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-
-    .page-header {
-        background: linear-gradient(135deg, #e10600 0%, #1e1e1e 60%);
-        border-radius: 14px;
-        padding: 2rem 2.5rem;
-        margin-bottom: 1.5rem;
-        color: white;
-    }
-    .page-header h1 { font-size: 2.2rem; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
-    .page-header p  { opacity: 0.8; margin: 0.25rem 0 0 0; }
-
-    .form-card {
-        background: #1e1e1e;
-        border: 1px solid #333;
-        border-radius: 14px;
-        padding: 1.75rem;
-        color: white;
-        margin-bottom: 1.5rem;
-    }
-    .form-card h3 { margin: 0 0 0.25rem 0; font-weight: 700; }
-    .form-card .form-hint { opacity: 0.55; font-size: 0.88rem; margin-bottom: 1rem; }
-
-    .pred-grid {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    .pred-card {
-        flex: 1;
-        min-width: 250px;
-        background: #1e1e1e;
-        border: 1px solid #333;
-        border-radius: 14px;
-        padding: 1.5rem;
-        color: white;
-        text-align: center;
-    }
-    .pred-card .user-name {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.6;
-    }
-    .pred-card .pick-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.5;
-        margin-top: 1rem;
-    }
-    .pred-card .pick-value {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #e10600;
-        margin-top: 0.15rem;
-    }
-
-    .team-badge {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: white;
-        margin-left: 6px;
-        vertical-align: middle;
-    }
-
-    /* Red trash-can delete button */
-    .trash-btn {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: -2.8rem;
-        margin-bottom: 1.2rem;
-        padding-right: 0.75rem;
-    }
-    .trash-btn button {
-        background: transparent !important;
-        border: none !important;
-        color: #e10600 !important;
-        font-size: 0.95rem !important;
-        padding: 0.1rem 0.4rem !important;
-        min-height: 0 !important;
-        line-height: 1 !important;
-        opacity: 0.35;
-        transition: opacity 0.15s;
-        cursor: pointer;
-    }
-    .trash-btn button:hover {
-        opacity: 1;
-        background: transparent !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-USERS = ["Seth", "Colin"]
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-TEAM_COLORS = {
-    "McLaren": "#FF8700", "Mercedes": "#00D2BE", "Red Bull": "#1E41FF",
-    "Ferrari": "#DC0000", "Williams": "#005AFF", "Racing Bulls": "#2B4562",
-    "Aston Martin": "#006F62", "Haas": "#B6BABD", "Audi": "#C0C0C0",
-    "Alpine": "#0090FF", "Cadillac": "#FFD700",
-}
-
-
-def load_drivers():
-    return pd.read_csv(os.path.join(DATA_DIR, "drivers.csv"))
-
-
-def load_constructors():
-    return pd.read_csv(os.path.join(DATA_DIR, "constructors.csv"))
-
-
-def load_season_predictions():
-    return pd.read_csv(os.path.join(DATA_DIR, "season_predictions.csv"))
-
-
-def save_season_predictions(df: pd.DataFrame):
-    df.to_csv(os.path.join(DATA_DIR, "season_predictions.csv"), index=False)
-
-
-def driver_with_team(name: str, drivers_df: pd.DataFrame) -> str:
-    """Return 'Name  (Team)' for display."""
-    row = drivers_df[drivers_df["Driver Name"] == name]
-    if row.empty:
-        return name
-    team = row.iloc[0]["Driver Team"]
-    return f"{name}  —  {team}"
-
+st.markdown(COMMON_STYLES, unsafe_allow_html=True)
+st.markdown(SEASON_PREDICTIONS_STYLES, unsafe_allow_html=True)
+st.markdown(PREDICTION_CARD_STYLES, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # UI
@@ -155,11 +30,10 @@ def driver_with_team(name: str, drivers_df: pd.DataFrame) -> str:
 
 # Header
 st.markdown(
-    """
-    <div class="page-header">
-        <h1>Season Predictions</h1>
-    </div>
-    """,
+    render_page_header(
+        "Season Predictions",
+        "Predict the full Drivers' and Constructors' Championships for 2026."
+    ),
     unsafe_allow_html=True,
 )
 
@@ -169,72 +43,238 @@ season_df = load_season_predictions()
 
 driver_names = drivers_df["Driver Name"].tolist()
 constructor_names = constructors_df["Team Name"].tolist()
+driver_teams = dict(zip(drivers_df["Driver Name"], drivers_df["Driver Team"]))
 
-# Build display labels:  "Name  —  Team"
-driver_display = [driver_with_team(d, drivers_df) for d in driver_names]
-
-# --- Form card ---
-st.markdown(
-    '<div class="form-card"><h3>Make Your Pick</h3>'
-    '<div class="form-hint">Select a user and choose your drivers.</div></div>',
-    unsafe_allow_html=True,
-)
-
+# --- User selector ---
 col_user, _ = st.columns([1, 2])
 with col_user:
     user = st.selectbox("User", USERS, key="season_user")
 
-# Pre-fill
+# --- Pre-fill logic ---
 existing = season_df[season_df["user"] == user]
-default_driver_idx = 0
-default_constructor_idx = 0
+prefilled_drivers: dict[str, str] = {}
+prefilled_constructors: dict[str, str] = {}
 if not existing.empty:
     row = existing.iloc[0]
-    if row["drivers_champion"] in driver_names:
-        default_driver_idx = driver_names.index(row["drivers_champion"])
-    if row["constructors_champion"] in constructor_names:
-        default_constructor_idx = constructor_names.index(row["constructors_champion"])
-
-col1, col2 = st.columns(2)
-with col1:
-    driver_idx = st.selectbox(
-        "Drivers' Champion",
-        range(len(driver_names)),
-        format_func=lambda i: driver_display[i],
-        index=default_driver_idx,
-        key="season_driver",
-    )
-    drivers_champion = driver_names[driver_idx]
-
-with col2:
-    constructors_champion = st.selectbox(
-        "Constructors' Champion",
-        constructor_names,
-        index=default_constructor_idx,
-        key="season_constructor",
-    )
-
-st.markdown("")
-submit_season = st.button("Submit Season Prediction", type="primary", use_container_width=True)
-
-if submit_season:
-    season_df = load_season_predictions()
-    mask = season_df["user"] == user
-    new_row = {
-        "user": user,
-        "drivers_champion": drivers_champion,
-        "constructors_champion": constructors_champion,
-    }
-    if mask.any():
-        for col, val in new_row.items():
-            season_df.loc[mask, col] = val
-    else:
-        season_df = pd.concat([season_df, pd.DataFrame([new_row])], ignore_index=True)
-    save_season_predictions(season_df)
-    st.success(f"Season prediction saved for **{user}**!")
+    for pos in DRIVER_POSITIONS:
+        val = str(row.get(pos, ""))
+        if val in driver_names:
+            prefilled_drivers[pos] = val
+    for pos in CONSTRUCTOR_POSITIONS:
+        val = str(row.get(pos, ""))
+        if val in constructor_names:
+            prefilled_constructors[pos] = val
 
 # ---------------------------------------------------------------------------
-# Display current predictions as styled cards
+# Initialize session-state selections (once per user)
+# ---------------------------------------------------------------------------
+state_key = f"_season_init_{user}"
+if st.session_state.get(state_key) != user:
+    # Reset all position keys in session state
+    for pos in DRIVER_POSITIONS:
+        widget_key = f"season_driver_{pos}"
+        if pos in prefilled_drivers:
+            st.session_state[widget_key] = prefilled_drivers[pos]
+        else:
+            st.session_state[widget_key] = PLACEHOLDER
+    for pos in CONSTRUCTOR_POSITIONS:
+        widget_key = f"season_constructor_{pos}"
+        if pos in prefilled_constructors:
+            st.session_state[widget_key] = prefilled_constructors[pos]
+        else:
+            st.session_state[widget_key] = PLACEHOLDER
+    st.session_state[state_key] = user
+
+# ---------------------------------------------------------------------------
+# Build the set of already-selected drivers/constructors (for filtering)
+# ---------------------------------------------------------------------------
+def get_selected_drivers(exclude_pos: str) -> set[str]:
+    """Return drivers currently selected in other positions."""
+    selected = set()
+    for p in DRIVER_POSITIONS:
+        if p == exclude_pos:
+            continue
+        val = st.session_state.get(f"season_driver_{p}", PLACEHOLDER)
+        if val != PLACEHOLDER:
+            selected.add(val)
+    return selected
+
+
+def get_selected_constructors(exclude_pos: str) -> set[str]:
+    """Return constructors currently selected in other positions."""
+    selected = set()
+    for p in CONSTRUCTOR_POSITIONS:
+        if p == exclude_pos:
+            continue
+        val = st.session_state.get(f"season_constructor_{p}", PLACEHOLDER)
+        if val != PLACEHOLDER:
+            selected.add(val)
+    return selected
+
+# ---------------------------------------------------------------------------
+# Championships Side-by-Side
+# ---------------------------------------------------------------------------
+col_drivers, col_constructors = st.columns(2)
+
+# ---------------------------------------------------------------------------
+# Drivers' Championship
+# ---------------------------------------------------------------------------
+with col_drivers:
+    st.markdown('<div class="championship-section"><h3>Drivers\' Championship</h3><div class="championship-body">', unsafe_allow_html=True)
+
+    driver_selections: dict[str, str] = {}
+
+    for i, pos in enumerate(DRIVER_POSITIONS):
+        pc = pos_class(i + 1)
+        
+        # Drivers available for this slot
+        already_taken = get_selected_drivers(pos)
+        current_val = st.session_state.get(f"season_driver_{pos}", PLACEHOLDER)
+        
+        available = [d for d in driver_names if d not in already_taken or d == current_val]
+        options = [PLACEHOLDER] + available
+        display_options = [PLACEHOLDER] + [driver_with_team(d, drivers_df) for d in available]
+        
+        # Determine current index
+        if current_val in options:
+            idx = options.index(current_val)
+        else:
+            idx = 0
+        
+        col_label, col_select = st.columns([0.2, 4], gap="small")
+        with col_label:
+            position_num = i + 1
+            st.markdown(
+                f'<div style="padding-top:0.45rem"><span class="pos-label {pc}">P{position_num}</span></div>',
+                unsafe_allow_html=True,
+            )
+        with col_select:
+            chosen = st.selectbox(
+                f"Driver Position {position_num}",
+                options,
+                format_func=lambda v, _opts=options, _disp=display_options: _disp[_opts.index(v)],
+                index=idx,
+                key=f"season_driver_{pos}",
+                label_visibility="collapsed",
+            )
+        driver_selections[pos] = chosen
+
+    # --- Submit Drivers' Championship ---
+    st.markdown("")
+    submit_drivers = st.button("Submit Drivers' Championship", type="primary", use_container_width=True, key="submit_drivers")
+
+    if submit_drivers:
+        driver_chosen_list = list(driver_selections.values())
+        
+        # Check for empty slots
+        empty_driver_slots = [p for p, v in driver_selections.items() if v == PLACEHOLDER]
+        
+        if empty_driver_slots:
+            st.error(f"Missing driver selections: **{', '.join(empty_driver_slots)}**. Every position must have a driver.")
+        else:
+            # Duplicate check (should be impossible with filtering, but just in case)
+            driver_dupes = set([d for d in driver_chosen_list if driver_chosen_list.count(d) > 1 and d != PLACEHOLDER])
+            
+            if driver_dupes:
+                st.error(f"Duplicate drivers: **{', '.join(sorted(driver_dupes))}**. Each driver must appear exactly once.")
+            else:
+                season_df = load_season_predictions()
+                mask = season_df["user"] == user
+                new_row = {"user": user, **driver_selections}
+                if mask.any():
+                    for col_name, val in driver_selections.items():
+                        season_df.loc[mask, col_name] = val
+                else:
+                    # Need to create full row with placeholders for constructors
+                    full_row = {"user": user, **driver_selections}
+                    for pos in CONSTRUCTOR_POSITIONS:
+                        full_row[pos] = PLACEHOLDER
+                    season_df = pd.concat([season_df, pd.DataFrame([full_row])], ignore_index=True)
+                save_season_predictions(season_df)
+                st.success(f"Drivers' Championship prediction saved for **{user}**!")
+    
+    st.markdown('</div></div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# Constructors' Championship
+# ---------------------------------------------------------------------------
+with col_constructors:
+    st.markdown('<div class="championship-section"><h3>Constructors\' Championship</h3><div class="championship-body">', unsafe_allow_html=True)
+
+    constructor_selections: dict[str, str] = {}
+    for i, pos in enumerate(CONSTRUCTOR_POSITIONS):
+        pc = pos_class(i + 1)
+        
+        # Constructors available for this slot
+        already_taken = get_selected_constructors(pos)
+        current_val = st.session_state.get(f"season_constructor_{pos}", PLACEHOLDER)
+        
+        available = [c for c in constructor_names if c not in already_taken or c == current_val]
+        options = [PLACEHOLDER] + available
+        
+        # Determine current index
+        if current_val in options:
+            idx = options.index(current_val)
+        else:
+            idx = 0
+        
+        col_label, col_select = st.columns([0.2, 4], gap="small")
+        with col_label:
+            position_num = i + 1
+            st.markdown(
+                f'<div style="padding-top:0.45rem"><span class="pos-label {pc}">P{position_num}</span></div>',
+                unsafe_allow_html=True,
+            )
+        with col_select:
+            chosen = st.selectbox(
+                f"Constructor Position {position_num}",
+                options,
+                index=idx,
+                key=f"season_constructor_{pos}",
+                label_visibility="collapsed",
+            )
+        constructor_selections[pos] = chosen
+
+    # --- Submit Constructors' Championship ---
+    st.markdown("")
+    submit_constructors = st.button("Submit Constructors' Championship", type="primary", use_container_width=True, key="submit_constructors")
+
+    if submit_constructors:
+        constructor_chosen_list = list(constructor_selections.values())
+        
+        # Check for empty slots
+        empty_constructor_slots = [p for p, v in constructor_selections.items() if v == PLACEHOLDER]
+        
+        if empty_constructor_slots:
+            st.error(f"Missing constructor selections: **{', '.join(empty_constructor_slots)}**. Every position must have a constructor.")
+        else:
+            # Duplicate check (should be impossible with filtering, but just in case)
+            constructor_dupes = set([c for c in constructor_chosen_list if constructor_chosen_list.count(c) > 1 and c != PLACEHOLDER])
+            
+            if constructor_dupes:
+                st.error(f"Duplicate constructors: **{', '.join(sorted(constructor_dupes))}**. Each constructor must appear exactly once.")
+            else:
+                season_df = load_season_predictions()
+                mask = season_df["user"] == user
+                new_row = {"user": user, **constructor_selections}
+                if mask.any():
+                    for col_name, val in constructor_selections.items():
+                        season_df.loc[mask, col_name] = val
+                else:
+                    # Need to create full row with placeholders for drivers
+                    full_row = {"user": user}
+                    for pos in DRIVER_POSITIONS:
+                        full_row[pos] = PLACEHOLDER
+                    for pos in CONSTRUCTOR_POSITIONS:
+                        full_row[pos] = constructor_selections[pos]
+                    season_df = pd.concat([season_df, pd.DataFrame([full_row])], ignore_index=True)
+                save_season_predictions(season_df)
+            st.success(f"Constructors' Championship prediction saved for **{user}**!")
+    
+    st.markdown('</div></div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# Display current predictions
 # ---------------------------------------------------------------------------
 st.markdown("---")
 st.markdown("### Current Predictions")
@@ -245,39 +285,51 @@ if season_df.empty:
     st.info("No season predictions yet — be the first!")
 else:
     season_df_display = season_df.reset_index()  # keeps original index for deletion
+    display_cols = st.columns(len(season_df_display))
     
-    # Calculate number of columns needed
-    num_cards = len(season_df_display)
-    cols = st.columns(num_cards)
-    
-    for col_idx, (_, row) in enumerate(season_df_display.iterrows()):
-        with cols[col_idx]:
-            driver_team = ""
-            d_row = drivers_df[drivers_df["Driver Name"] == row["drivers_champion"]]
-            if not d_row.empty:
-                driver_team = d_row.iloc[0]["Driver Team"]
-            team_color = TEAM_COLORS.get(driver_team, "#555")
-            cons_color = TEAM_COLORS.get(row["constructors_champion"], "#555")
-
-            st.markdown(
-                f"""
-                <div class="pred-card">
-                    <div class="user-name">{row['user']}</div>
-                    <div class="pick-label">Drivers' Champion</div>
-                    <div class="pick-value">{row['drivers_champion']}
-                        <span class="team-badge" style="background:{team_color}">{driver_team}</span>
-                    </div>
-                    <div class="pick-label">Constructors' Champion</div>
-                    <div class="pick-value" style="color:{cons_color}">{row['constructors_champion']}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    for idx, (_, pred_row) in enumerate(season_df_display.iterrows()):
+        with display_cols[idx]:
+            # Drivers' Championship
+            html = f'<div class="user-col-header">{pred_row["user"]} — Drivers</div>'
+            for i, pos in enumerate(DRIVER_POSITIONS, 1):
+                driver = pred_row.get(pos, "")
+                if driver and driver != PLACEHOLDER:
+                    team = driver_teams.get(driver, "")
+                    color = TEAM_COLORS.get(team, "#555")
+                    pc = pos_class(i)
+                    html += (
+                        f'<div class="result-row">'
+                        f'<span class="result-pos"><span class="pos-label {pc}">P{i}</span></span>'
+                        f'<span class="result-driver">{driver}</span>'
+                        f'<span class="result-team" style="color:{color}; opacity:1;">{team}</span>'
+                        f'</div>'
+                    )
+            
+            # Constructors' Championship
+            html += f'<div class="user-col-header" style="margin-top:1.5rem;">{pred_row["user"]} — Constructors</div>'
+            for i, pos in enumerate(CONSTRUCTOR_POSITIONS, 1):
+                constructor = pred_row.get(pos, "")
+                if constructor and constructor != PLACEHOLDER:
+                    color = TEAM_COLORS.get(constructor, "#555")
+                    pc = pos_class(i)
+                    html += (
+                        f'<div class="result-row">'
+                        f'<span class="result-pos"><span class="pos-label {pc}">P{i}</span></span>'
+                        f'<span class="result-driver" style="color:{color}; opacity:1;">{constructor}</span>'
+                        f'</div>'
+                    )
+            
+            st.markdown(html, unsafe_allow_html=True)
+            
             trash_icon = "\u2715"  # small X mark
             st.markdown('<div class="trash-btn">', unsafe_allow_html=True)
-            if st.button(trash_icon, key=f"del_season_{row['index']}"):
+            if st.button(trash_icon, key=f"del_season_{pred_row['index']}"):
                 season_df = load_season_predictions()
-                season_df = season_df.drop(index=row["index"]).reset_index(drop=True)
+                season_df = season_df.drop(index=pred_row["index"]).reset_index(drop=True)
                 save_season_predictions(season_df)
+                # Clear the session-state init key so dropdowns reset on rerun
+                state_key_del = f"_season_init_{pred_row['user']}"
+                if state_key_del in st.session_state:
+                    del st.session_state[state_key_del]
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)

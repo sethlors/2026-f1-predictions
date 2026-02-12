@@ -1,7 +1,13 @@
 import streamlit as st
 import pandas as pd
-import os
 from datetime import date
+from utils.data_helpers import (
+    load_drivers,
+    load_races,
+    load_constructors,
+    load_season_predictions,
+    load_race_predictions,
+)
 
 st.set_page_config(
     page_title="2026 F1 Predictions",
@@ -15,118 +21,249 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Racing+Sans+One&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+        background: #0a0a0a !important;
     }
 
+    /* Checkered flag pattern for hero background */
     .hero {
-        background: linear-gradient(135deg, #e10600 0%, #1e1e1e 60%);
-        border-radius: 16px;
-        padding: 3rem 2.5rem;
+        position: relative;
+        background: linear-gradient(135deg, #e10600 0%, #8b0000 50%, #1e1e1e 100%);
+        border-radius: 20px;
+        padding: 3.5rem 3rem;
         margin-bottom: 2rem;
         color: white;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(225, 6, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    }
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: 
+            repeating-conic-gradient(rgba(255,255,255,0.03) 0% 25%, transparent 0% 50%) 
+            50% / 40px 40px;
+        opacity: 0.4;
+        pointer-events: none;
+    }
+    .hero::after {
+        content: '';
+        position: absolute;
+        bottom: -50%;
+        left: -10%;
+        width: 120%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+        transform: skewY(-3deg);
+        pointer-events: none;
     }
     .hero h1 {
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 900;
-        margin: 0 0 0.25rem 0;
-        letter-spacing: -1px;
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -2px;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        position: relative;
+        z-index: 1;
     }
     .hero .subtitle {
-        font-size: 1.2rem;
-        opacity: 0.85;
+        font-size: 1.3rem;
+        opacity: 0.9;
         margin-top: 0;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
     .stat-row {
         display: flex;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
         flex-wrap: wrap;
     }
     .stat-card {
         flex: 1;
         min-width: 160px;
-        background: #1e1e1e;
-        border: 1px solid #333;
-        border-radius: 12px;
-        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #1a1a1a 0%, #151515 100%);
+        border: 1px solid rgba(225, 6, 0, 0.2);
+        border-radius: 16px;
+        padding: 1.75rem 1.5rem;
         color: white;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #e10600, #ff6347);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(225, 6, 0, 0.5);
+        box-shadow: 0 8px 30px rgba(225, 6, 0, 0.3), 0 0 0 1px rgba(225,6,0,0.3) inset;
+    }
+    .stat-card:hover::before {
+        opacity: 1;
     }
     .stat-card .stat-value {
-        font-size: 2rem;
+        font-size: 2.5rem;
         font-weight: 900;
-        color: #e10600;
+        background: linear-gradient(135deg, #e10600 0%, #ff6347 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 2px 8px rgba(225, 6, 0, 0.4));
     }
     .stat-card .stat-label {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.7;
-        margin-top: 0.25rem;
+        letter-spacing: 1.5px;
+        opacity: 0.6;
+        margin-top: 0.5rem;
+        font-weight: 600;
     }
 
     .nav-cards {
         display: flex;
-        gap: 1.25rem;
-        margin-top: 1rem;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
         flex-wrap: wrap;
     }
     .nav-card {
         flex: 1;
-        min-width: 260px;
-        background: #1e1e1e;
-        border: 1px solid #333;
-        border-radius: 14px;
-        padding: 2rem 1.75rem;
+        min-width: 280px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #151515 100%);
+        border: 1px solid #2a2a2a;
+        border-radius: 18px;
+        padding: 2.5rem 2rem;
         color: white;
-        transition: border-color 0.2s, transform 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .nav-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #e10600, #ff6347, #e10600);
+        transform: translateX(-100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-card::after {
+        content: '';
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(225,6,0,0.1) 0%, transparent 70%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
     }
     .nav-card:hover {
-        border-color: #e10600;
-        transform: translateY(-2px);
+        border-color: rgba(225, 6, 0, 0.4);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(225, 6, 0, 0.25);
+    }
+    .nav-card:hover::before {
+        transform: translateX(0);
+    }
+    .nav-card:hover::after {
+        opacity: 1;
     }
     .nav-card h3 {
-        margin: 0 0 0.5rem 0;
-        font-weight: 700;
+        margin: 0 0 0.75rem 0;
+        font-weight: 800;
+        font-size: 1.35rem;
+        letter-spacing: -0.5px;
     }
     .nav-card p {
         margin: 0;
         opacity: 0.7;
         font-size: 0.95rem;
-        line-height: 1.5;
+        line-height: 1.6;
     }
 
     .countdown-bar {
-        background: linear-gradient(90deg, #e10600 0%, #ff6347 100%);
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #e10600 0%, #c70000 50%, #8b0000 100%);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
         color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 1rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(225, 6, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    }
+    .countdown-bar::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 0.8; }
     }
     .countdown-bar .race-name {
-        font-weight: 700;
-        font-size: 1.1rem;
+        font-weight: 800;
+        font-size: 1.2rem;
+        letter-spacing: -0.3px;
+        position: relative;
+        z-index: 1;
     }
     .countdown-bar .days-left {
         font-weight: 900;
-        font-size: 1.3rem;
+        font-size: 1.5rem;
+        background: rgba(255,255,255,0.2);
+        padding: 0.3rem 1rem;
+        border-radius: 8px;
+        position: relative;
+        z-index: 1;
+        backdrop-filter: blur(10px);
     }
 
     .footer {
         text-align: center;
-        opacity: 0.4;
+        opacity: 0.35;
         font-size: 0.8rem;
-        margin-top: 3rem;
-        padding-bottom: 1rem;
+        margin-top: 4rem;
+        padding-bottom: 1.5rem;
+    }
+    .footer a {
+        transition: opacity 0.2s;
+    }
+    .footer a:hover {
+        opacity: 1;
     }
     </style>
     """,
@@ -136,13 +273,11 @@ st.markdown(
 # ---------------------------------------------------------------------------
 # Data
 # ---------------------------------------------------------------------------
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-
-drivers_df = pd.read_csv(os.path.join(DATA_DIR, "drivers.csv"))
-races_df = pd.read_csv(os.path.join(DATA_DIR, "races.csv"))
-constructors_df = pd.read_csv(os.path.join(DATA_DIR, "constructors.csv"))
-season_df = pd.read_csv(os.path.join(DATA_DIR, "season_predictions.csv"))
-race_pred_df = pd.read_csv(os.path.join(DATA_DIR, "race_predictions.csv"))
+drivers_df = load_drivers()
+races_df = load_races()
+constructors_df = load_constructors()
+season_df = load_season_predictions()
+race_pred_df = load_race_predictions()
 
 # ---------------------------------------------------------------------------
 # Next-race countdown
