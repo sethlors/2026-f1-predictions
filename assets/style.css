@@ -1,0 +1,861 @@
+/* =========================================================================
+   2026 F1 Predictions – Global Stylesheet
+   Premium F1-inspired dark theme — zero Streamlit fingerprints
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Racing+Sans+One&family=JetBrains+Mono:wght@500;700&display=swap');
+
+/* ---------------------------------------------------------------------------
+   CSS Custom Properties
+   --------------------------------------------------------------------------- */
+:root {
+    --f1-red: #e10600;
+    --f1-red-dark: #9b0000;
+    --f1-red-glow: rgba(225, 6, 0, 0.35);
+    --bg-primary: #0a0a0a;
+    --bg-card: #141414;
+    --bg-card-hover: #1a1a1a;
+    --bg-elevated: #1a1a1a;
+    --bg-surface: #111111;
+    --border-default: #1e1e1e;
+    --border-muted: #2a2a2a;
+    --border-subtle: #161616;
+    --text-primary: #f0f0f0;
+    --text-secondary: #8b8b8b;
+    --text-muted: #555;
+    --gold: #FFD700;
+    --silver: #C0C0C0;
+    --bronze: #CD7F32;
+    --points-green: #238636;
+    --toast-success: #22c55e;
+    --toast-error: #ef4444;
+    --toast-info: #3b82f6;
+    --toast-warning: #f59e0b;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.5);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,.6);
+    --shadow-glow: 0 0 20px var(--f1-red-glow);
+    --transition-fast: .12s ease;
+    --transition-med: .22s ease;
+    --transition-slow: .4s cubic-bezier(.4,0,.2,1);
+    --nav-height: 56px;
+}
+
+/* =========================================================================
+   NUKE ALL STREAMLIT CHROME
+   ========================================================================= */
+
+/* Entire sidebar — gone */
+section[data-testid="stSidebar"],
+button[data-testid="stSidebarCollapsedControl"],
+div[data-testid="stSidebarCollapsedControl"],
+button[data-testid="collapsedControl"] {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Header bar, deploy button, hamburger, running indicator */
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+#MainMenu, button[kind="header"], .stDeployButton,
+div[data-testid="stToolbar"],
+div[data-testid="stDecoration"],
+div[data-testid="stStatusWidget"] {
+    display: none !important;
+}
+
+/* Streamlit footer */
+footer, .stApp > footer {
+    display: none !important;
+}
+
+/* App-view full-width: remove sidebar-related margin */
+.stApp > div[data-testid="stAppViewContainer"] {
+    margin-left: 0 !important;
+}
+section.main .block-container {
+    max-width: 1100px !important;
+    padding: 0 2rem 3rem 2rem !important;
+}
+
+/* =========================================================================
+   BASE
+   ========================================================================= */
+html, body, [class*="css"], .stApp {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-primary) !important;
+    background: var(--bg-primary) !important;
+}
+
+/* Remove Streamlit's default padding on the main block */
+.main .block-container { padding-top: 0 !important; }
+
+/* ---------------------------------------------------------------------------
+   Keyframe Animations
+   --------------------------------------------------------------------------- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 8px var(--f1-red-glow); }
+    50%      { box-shadow: 0 0 24px var(--f1-red-glow); }
+}
+@keyframes borderGlow {
+    0%, 100% { border-color: var(--f1-red); }
+    50%      { border-color: var(--f1-red-dark); }
+}
+
+/* =========================================================================
+   TOP NAVIGATION BAR
+   ========================================================================= */
+.f1-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background: rgba(10, 10, 10, .92);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-bottom: 1px solid var(--border-default);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.nav-inner {
+    width: 100%;
+    max-width: 1100px;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+.brand-mark {
+    font-family: 'Racing Sans One', cursive;
+    font-size: 22px;
+    color: var(--f1-red);
+    letter-spacing: -1px;
+}
+.brand-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+.brand-year {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    border: 1px solid var(--border-muted);
+    border-radius: 4px;
+}
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.nav-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .4px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+.nav-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-card);
+}
+.nav-link.active {
+    color: var(--f1-red);
+    background: rgba(225, 6, 0, .08);
+}
+.nav-spacer {
+    height: calc(var(--nav-height) + 20px);
+}
+
+/* =========================================================================
+   PAGE HEADER
+   ========================================================================= */
+.page-header {
+    padding: 28px 0 20px;
+    animation: fadeInUp .5s ease both;
+}
+.page-header h1 {
+    font-family: 'Racing Sans One', cursive !important;
+    font-size: 2.2rem;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: 1px;
+    line-height: 1.15;
+}
+.page-header p {
+    font-size: .95rem;
+    color: var(--text-secondary);
+    margin: 6px 0 0;
+}
+
+/* =========================================================================
+   HERO (Home page)
+   ========================================================================= */
+.hero {
+    padding: 48px 0 18px;
+    text-align: center;
+    animation: fadeInUp .5s ease both;
+}
+.hero h1 {
+    font-family: 'Racing Sans One', cursive !important;
+    font-size: 3rem;
+    margin: 0 0 8px;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--text-primary), var(--f1-red));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* =========================================================================
+   COUNTDOWN BAR
+   ========================================================================= */
+.countdown-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-left: 3px solid var(--f1-red);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    margin: 12px 0 24px;
+    animation: fadeInUp .55s ease both;
+}
+.countdown-bar .race-name {
+    font-size: .85rem;
+    color: var(--text-secondary);
+}
+.countdown-bar .race-name span {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+.countdown-bar .days-left {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .85rem;
+    color: var(--f1-red);
+    font-weight: 700;
+}
+
+/* =========================================================================
+   STAT CARDS
+   ========================================================================= */
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+    animation: fadeInUp .6s ease both;
+}
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 20px 16px;
+    text-align: center;
+    transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+.stat-card:hover {
+    border-color: var(--f1-red);
+    transform: translateY(-2px);
+}
+.stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.stat-label {
+    font-size: .75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 6px;
+}
+
+/* =========================================================================
+   NAVIGATION CARDS (Home)
+   ========================================================================= */
+.nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+    animation: fadeInUp .65s ease both;
+}
+.nav-card-link {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+.nav-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-med);
+    cursor: pointer;
+}
+.nav-card:hover {
+    border-color: var(--f1-red);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-glow);
+}
+.nav-card .card-icon {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+}
+.nav-card h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--text-primary);
+}
+.nav-card p {
+    font-size: .8rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+.nav-card .card-arrow {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%) translateX(4px);
+    opacity: 0;
+    font-size: 1.2rem;
+    color: var(--f1-red);
+    transition: all var(--transition-med);
+}
+.nav-card:hover .card-arrow {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* =========================================================================
+   SECTION HEADER
+   ========================================================================= */
+.section-header {
+    margin: 32px 0 16px;
+    animation: fadeInUp .45s ease both;
+}
+.section-header h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+    margin: 0;
+}
+.accent-line {
+    height: 3px;
+    width: 48px;
+    background: var(--f1-red);
+    border-radius: 2px;
+    margin-top: 8px;
+}
+
+/* =========================================================================
+   DIVIDERS
+   ========================================================================= */
+.f1-divider {
+    height: 1px;
+    background: var(--border-default);
+    margin: 28px 0;
+}
+.f1-divider-accent {
+    height: 2px;
+    background: linear-gradient(90deg, var(--f1-red), transparent);
+    margin: 28px 0;
+}
+
+/* =========================================================================
+   TOAST NOTIFICATIONS (replaces st.success / st.error / st.info)
+   ========================================================================= */
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    margin: 12px 0;
+    font-size: .88rem;
+    font-weight: 500;
+    animation: fadeInUp .3s ease both;
+    border: 1px solid;
+}
+.toast-icon {
+    font-size: 1rem;
+    font-weight: 700;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.toast-success {
+    background: rgba(34, 197, 94, .08);
+    border-color: rgba(34, 197, 94, .25);
+    color: var(--toast-success);
+}
+.toast-error {
+    background: rgba(239, 68, 68, .08);
+    border-color: rgba(239, 68, 68, .25);
+    color: var(--toast-error);
+}
+.toast-info {
+    background: rgba(59, 130, 246, .08);
+    border-color: rgba(59, 130, 246, .25);
+    color: var(--toast-info);
+}
+.toast-warning {
+    background: rgba(245, 158, 11, .08);
+    border-color: rgba(245, 158, 11, .25);
+    color: var(--toast-warning);
+}
+
+/* =========================================================================
+   EMPTY STATE
+   ========================================================================= */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    border: 1px dashed var(--border-muted);
+    border-radius: var(--radius-lg);
+    margin: 24px 0;
+}
+.empty-icon { font-size: 2.4rem; margin-bottom: 8px; }
+.empty-msg {
+    font-size: .9rem;
+    color: var(--text-secondary);
+}
+
+/* =========================================================================
+   TIMING TOWER
+   ========================================================================= */
+.timing-tower {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: 20px 0;
+    animation: fadeInUp .45s ease both;
+}
+.timing-tower-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-surface);
+}
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--f1-red);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: .85rem;
+}
+.user-label {
+    font-weight: 700;
+    font-size: .95rem;
+}
+.championship-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+}
+.timing-tower-body {
+    padding: 4px 0;
+}
+.timing-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 20px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background var(--transition-fast);
+}
+.timing-row:last-child { border-bottom: none; }
+.timing-row:hover { background: var(--bg-card-hover); }
+.timing-row.podium-1 { background: rgba(255, 215, 0, .04); }
+.timing-row.podium-2 { background: rgba(192, 192, 192, .03); }
+.timing-row.podium-3 { background: rgba(205, 127, 50, .03); }
+
+.t-pos { width: 44px; flex-shrink: 0; }
+.pos-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+.pos-gold   { background: rgba(255,215,0,.15); color: var(--gold); }
+.pos-silver { background: rgba(192,192,192,.12); color: var(--silver); }
+.pos-bronze { background: rgba(205,127,50,.12); color: var(--bronze); }
+.pos-points { background: rgba(35,134,54,.12); color: var(--points-green); }
+.pos-rest   { background: var(--bg-elevated); color: var(--text-secondary); }
+
+.t-color-bar {
+    width: 3px;
+    height: 18px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.t-driver {
+    font-weight: 600;
+    font-size: .85rem;
+    flex: 1;
+}
+.t-team {
+    font-size: .72rem;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* =========================================================================
+   PODIUM
+   ========================================================================= */
+.podium-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 12px;
+    animation: fadeInUp .55s ease both;
+}
+.podium-slot {
+    text-align: center;
+    width: 140px;
+}
+.podium-driver {
+    font-weight: 700;
+    font-size: .85rem;
+    margin-bottom: 4px;
+}
+.podium-team {
+    font-size: .68rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.podium-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+}
+.podium-1st .podium-block {
+    height: 80px;
+    font-size: 1.6rem;
+    background: linear-gradient(180deg, var(--gold), #b8860b);
+}
+.podium-2nd .podium-block {
+    height: 56px;
+    font-size: 1.3rem;
+    background: linear-gradient(180deg, var(--silver), #888);
+}
+.podium-3rd .podium-block {
+    height: 42px;
+    font-size: 1.1rem;
+    background: linear-gradient(180deg, var(--bronze), #8b4513);
+}
+
+/* =========================================================================
+   RACE CALENDAR GRID
+   ========================================================================= */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 10px;
+    margin: 16px 0;
+    animation: fadeInUp .6s ease both;
+}
+.calendar-race {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 14px 12px;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+.calendar-race:hover {
+    border-color: var(--border-muted);
+    transform: translateY(-1px);
+}
+.calendar-race.is-past { opacity: .4; }
+.calendar-race.is-next {
+    border-color: var(--f1-red);
+    animation: pulseGlow 2s infinite;
+}
+.calendar-round {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    font-weight: 700;
+    color: var(--f1-red);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+.calendar-name {
+    font-weight: 700;
+    font-size: .8rem;
+    margin-bottom: 3px;
+}
+.calendar-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .68rem;
+    color: var(--text-secondary);
+}
+
+/* =========================================================================
+   FUN PREDICTION CARDS
+   ========================================================================= */
+.fun-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    transition: all var(--transition-med);
+    animation: fadeInUp .4s ease both;
+}
+.fun-card:hover {
+    border-color: var(--border-muted);
+    transform: translateY(-2px);
+}
+.fun-card-user {
+    font-weight: 700;
+    font-size: .8rem;
+    color: var(--f1-red);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+.fun-card-text {
+    font-size: .88rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+/* =========================================================================
+   FOOTER
+   ========================================================================= */
+.app-footer {
+    text-align: center;
+    padding: 32px 0;
+    font-size: .75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-default);
+    margin-top: 48px;
+}
+.app-footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.app-footer a:hover { color: var(--f1-red); }
+
+/* =========================================================================
+   STREAMLIT WIDGET OVERRIDES — make them feel custom
+   ========================================================================= */
+
+/* Selectbox */
+div[data-baseweb="select"] {
+    background: var(--bg-card) !important;
+    border-radius: var(--radius-sm) !important;
+}
+div[data-baseweb="select"] > div {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-muted) !important;
+    border-radius: var(--radius-sm) !important;
+    transition: border-color var(--transition-fast) !important;
+}
+div[data-baseweb="select"] > div:hover,
+div[data-baseweb="select"] > div:focus-within {
+    border-color: var(--f1-red) !important;
+}
+
+/* Selectbox dropdown menu */
+ul[data-testid="stSelectboxVirtualDropdown"],
+div[data-baseweb="popover"] > div {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-muted) !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+/* Selectbox & text area labels */
+div[data-testid="stSelectbox"] label,
+div[data-testid="stTextArea"] label,
+div[data-testid="stTextInput"] label {
+    font-size: .78rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Text area */
+div[data-testid="stTextArea"] textarea {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-muted) !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: .88rem !important;
+    color: var(--text-primary) !important;
+    transition: border-color var(--transition-fast) !important;
+}
+div[data-testid="stTextArea"] textarea:focus {
+    border-color: var(--f1-red) !important;
+    box-shadow: 0 0 0 2px rgba(225,6,0,.12) !important;
+}
+
+/* Buttons — primary */
+button[data-testid="stBaseButton-primary"],
+button[kind="primary"] {
+    background: var(--f1-red) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 700 !important;
+    font-size: .82rem !important;
+    letter-spacing: .5px !important;
+    text-transform: uppercase !important;
+    padding: 8px 24px !important;
+    transition: all var(--transition-fast) !important;
+}
+button[data-testid="stBaseButton-primary"]:hover,
+button[kind="primary"]:hover {
+    background: #c40500 !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow) !important;
+}
+
+/* Buttons — secondary */
+button[data-testid="stBaseButton-secondary"],
+button[kind="secondary"] {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-muted) !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 600 !important;
+    font-size: .82rem !important;
+    transition: all var(--transition-fast) !important;
+}
+button[data-testid="stBaseButton-secondary"]:hover,
+button[kind="secondary"]:hover {
+    border-color: var(--f1-red) !important;
+    color: var(--f1-red) !important;
+}
+
+/* Hide default Streamlit notification styling, keep ours */
+div[data-testid="stNotification"] {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-muted) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Tabs */
+button[data-baseweb="tab"] {
+    font-weight: 600 !important;
+    font-size: .82rem !important;
+    letter-spacing: .5px !important;
+    color: var(--text-secondary) !important;
+    border: none !important;
+    background: transparent !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: var(--f1-red) !important;
+}
+div[data-baseweb="tab-highlight"] {
+    background-color: var(--f1-red) !important;
+}
+
+/* Expander */
+details[data-testid="stExpander"] {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-default) !important;
+    border-radius: var(--radius-md) !important;
+}
+details[data-testid="stExpander"] summary {
+    font-weight: 700 !important;
+    font-size: .88rem !important;
+}
+
+/* Columns — tighter gap */
+div[data-testid="stHorizontalBlock"] {
+    gap: 16px !important;
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+@media (max-width: 768px) {
+    .nav-inner { padding: 0 1rem; }
+    .brand-text { display: none; }
+    .nav-link { padding: 6px 10px; font-size: .8rem; }
+    section.main .block-container {
+        padding: 0 1rem 2rem 1rem !important;
+    }
+    .hero h1 { font-size: 2.2rem; }
+    .podium-slot { width: 100px; }
+    .podium-1st .podium-block { height: 60px; }
+    .podium-2nd .podium-block { height: 44px; }
+    .podium-3rd .podium-block { height: 34px; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+}
