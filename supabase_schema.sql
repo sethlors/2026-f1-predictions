@@ -69,3 +69,9 @@ ALTER TABLE season_predictions   DISABLE ROW LEVEL SECURITY;
 ALTER TABLE race_predictions     DISABLE ROW LEVEL SECURITY;
 ALTER TABLE fun_predictions      DISABLE ROW LEVEL SECURITY;
 
+-- Grant write access to anon role (used by the publishable/anon key)
+GRANT INSERT, UPDATE, DELETE ON season_predictions TO anon;
+GRANT INSERT, UPDATE, DELETE ON race_predictions   TO anon;
+GRANT INSERT, UPDATE, DELETE ON fun_predictions    TO anon;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon;
+
