@@ -287,10 +287,10 @@ season_df = load_season_predictions()
 if season_df.empty:
     st.markdown(render_empty_state("No season predictions yet — be the first!"), unsafe_allow_html=True)
 else:
+    # Collect per-user data
+    users_data = []
     for _, pred_row in season_df.iterrows():
         pred_user = pred_row["user"]
-
-        # Build driver values
         driver_vals = {}
         driver_list = []
         for pos in DRIVER_POSITIONS:
@@ -298,41 +298,52 @@ else:
             if val and val != PLACEHOLDER:
                 driver_vals[pos] = val
                 driver_list.append(val)
-
-        # Build constructor values
         constructor_vals = {}
         for pos in CONSTRUCTOR_POSITIONS:
             val = pred_row.get(pos, "")
             if val and val != PLACEHOLDER:
                 constructor_vals[pos] = val
+        users_data.append({
+            "user": pred_user,
+            "driver_vals": driver_vals,
+            "driver_list": driver_list,
+            "constructor_vals": constructor_vals,
+        })
 
-        # Podium visualization (drivers)
-        if len(driver_list) >= 3:
-            st.markdown(
-                render_podium(driver_list[:3], driver_teams),
-                unsafe_allow_html=True,
-            )
-
-        # Side-by-side timing towers
-        col_d, col_c = st.columns(2)
-        with col_d:
+    # --- Drivers' Championship: all users side by side ---
+    st.markdown(render_section_header("Drivers' Championship"), unsafe_allow_html=True)
+    driver_cols = st.columns(len(users_data))
+    for col, ud in zip(driver_cols, users_data):
+        with col:
+            if len(ud["driver_list"]) >= 3:
+                st.markdown(
+                    render_podium(ud["driver_list"][:3], driver_teams),
+                    unsafe_allow_html=True,
+                )
             st.markdown(
                 render_timing_tower(
-                    user=pred_user,
+                    user=ud["user"],
                     positions=DRIVER_POSITIONS,
-                    pos_values=driver_vals,
+                    pos_values=ud["driver_vals"],
                     driver_teams=driver_teams,
                     championship_label="Drivers",
                     placeholder=PLACEHOLDER,
                 ),
                 unsafe_allow_html=True,
             )
-        with col_c:
+
+    st.markdown(render_divider(), unsafe_allow_html=True)
+
+    # --- Constructors' Championship: all users side by side ---
+    st.markdown(render_section_header("Constructors' Championship"), unsafe_allow_html=True)
+    constructor_cols = st.columns(len(users_data))
+    for col, ud in zip(constructor_cols, users_data):
+        with col:
             st.markdown(
                 render_timing_tower(
-                    user=pred_user,
+                    user=ud["user"],
                     positions=CONSTRUCTOR_POSITIONS,
-                    pos_values=constructor_vals,
+                    pos_values=ud["constructor_vals"],
                     driver_teams=driver_teams,
                     championship_label="Constructors",
                     placeholder=PLACEHOLDER,
@@ -340,16 +351,19 @@ else:
                 unsafe_allow_html=True,
             )
 
-        # Delete button
-        st.markdown('<div class="trash-btn">', unsafe_allow_html=True)
-        if st.button("Delete prediction", key=f"del_season_{pred_user}"):
-            delete_season_prediction(pred_user)
-            del_key = f"_season_init_{pred_user}"
-            if del_key in st.session_state:
-                del st.session_state[del_key]
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(render_divider(), unsafe_allow_html=True)
 
-        st.markdown(render_divider(), unsafe_allow_html=True)
+    # --- Delete buttons ---
+    del_cols = st.columns(len(users_data))
+    for col, ud in zip(del_cols, users_data):
+        with col:
+            st.markdown('<div class="trash-btn">', unsafe_allow_html=True)
+            if st.button(f"Delete {ud['user']}'s prediction", key=f"del_season_{ud['user']}"):
+                delete_season_prediction(ud["user"])
+                del_key = f"_season_init_{ud['user']}"
+                if del_key in st.session_state:
+                    del st.session_state[del_key]
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(render_footer(), unsafe_allow_html=True)
