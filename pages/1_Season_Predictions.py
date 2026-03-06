@@ -175,7 +175,6 @@ with col_drivers:
                 f"Driver Position {i+1}",
                 options,
                 format_func=lambda v, _o=options, _d=display_options: _d[_o.index(v)],
-                index=idx,
                 key=f"season_driver_{pos}",
                 label_visibility="collapsed",
             )
@@ -244,7 +243,6 @@ with col_constructors:
             chosen = st.selectbox(
                 f"Constructor Position {i+1}",
                 options,
-                index=idx,
                 key=f"season_constructor_{pos}",
                 label_visibility="collapsed",
             )
